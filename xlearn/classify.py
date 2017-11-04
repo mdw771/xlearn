@@ -72,37 +72,33 @@ __all__ = ['model',
 def model(dim_img, nb_filters, nb_conv, nb_classes):
     """
     the cnn model for image transformation
-
     Parameters
     ----------
     dim_img : int
         The input image dimension
-
     nb_filters : int
         Number of filters
-
     nb_conv : int
         The convolution weight dimension
-
     Returns
     -------
     mdl
         Description.
-
     """
 
     mdl = Sequential()
 
     mdl.add(Convolution2D(nb_filters, nb_conv, nb_conv,
-                            border_mode='valid',
-                            input_shape=(1, dim_img, dim_img)))
+                          border_mode='valid',
+                          input_shape=(1, dim_img, dim_img),
+                          dim_ordering='th'))
     mdl.add(Activation('relu'))
-    mdl.add(Convolution2D(nb_filters, nb_conv, nb_conv))
+    mdl.add(Convolution2D(nb_filters, nb_conv, nb_conv, dim_ordering='th'))
     mdl.add(Activation('relu'))
     mdl.add(MaxPooling2D(pool_size=(2, 2)))
     mdl.add(Dropout(0.25))
 
-    mdl.add(Convolution2D(nb_filters * 2, nb_conv, nb_conv))
+    mdl.add(Convolution2D(nb_filters * 2, nb_conv, nb_conv, dim_ordering='th'))
     mdl.add(Activation('relu'))
     mdl.add(MaxPooling2D(pool_size=(2, 2)))
     mdl.add(Dropout(0.25))
@@ -121,18 +117,14 @@ def model(dim_img, nb_filters, nb_conv, nb_classes):
 def train(x_train, y_train, x_test, y_test, dim_img, nb_filters, nb_conv, batch_size, nb_epoch, nb_classes):
     """
     Function description.
-
     Parameters
     ----------
     parameter_01 : type
         Description.
-
     parameter_02 : type
         Description.
-
     parameter_03 : type
         Description.
-
     Returns
     -------
     return_01
@@ -150,4 +142,3 @@ def train(x_train, y_train, x_test, y_test, dim_img, nb_filters, nb_conv, batch_
     print('Test score:', score[0])
     print('Test accuracy:', score[1])
     return mdl
-

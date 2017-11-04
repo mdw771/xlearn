@@ -322,7 +322,7 @@ def reconstruct_patches(patches, image_size, step):
     
 def img_window(img, window_size):
     """
-    Function Description
+    Randomly take a window from the image
     
     Parameters
     ----------

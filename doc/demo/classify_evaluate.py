@@ -17,8 +17,12 @@ from xlearn.classify import model
 import matplotlib.pyplot as plt
 import time
 import glob
+import os
 
 np.random.seed(1337)
+
+window = [[360, 440], [1460, 1440]]
+dest_folder = '../../test/test_data'
 
 dim_img = 128
 patch_size = (dim_img, dim_img)
@@ -35,7 +39,7 @@ nb_conv = 3
 nb_evl = 100
 
 start_time = time.time()
-fnames = glob.glob('../../test/test_data/*.tiff')
+fnames = glob.glob(os.path.join(dest_folder, '*.tiff'))
 fnames = np.sort(fnames)
 
 mdl = model(dim_img, nb_filters, nb_conv, nb_classes)
@@ -51,7 +55,7 @@ for i in range(len(fnames)):
     X_evl = np.zeros((nb_evl, dim_img, dim_img))
 
     for j in range(nb_evl):
-        X_evl[j] = img_window(img[360:1460, 440:1440], dim_img)
+        X_evl[j] = img_window(img[window[0][0]:window[1][0], window[0][1]:window[1][1]], dim_img)
     X_evl = X_evl.reshape(X_evl.shape[0], 1, dim_img, dim_img)
     Y_evl = mdl.predict(X_evl, batch_size=batch_size)
     Y_score[i] = sum(np.dot(Y_evl, [0, 1]))
