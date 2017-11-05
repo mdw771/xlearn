@@ -380,3 +380,26 @@ def extract_3d(img, patch_size, step):
             patches_tmp = extract_patches(img[i+1], patch_size, step)
             patches = np.concatenate((patches, patches_tmp), axis=0)
     return patches
+
+
+def subdivide_image(img, tile_size=128, num=50, window=((800, 800), (1600, 1600)), reject_bg=True, **kwargs):
+    ret = []
+    for j in range(num):
+        accept = False
+        while not accept:
+            tile = img_window(img[window[0][0]:window[1][0], window[0][1]:window[1][1]], tile_size)
+            if reject_bg:
+                options = {}
+                if kwargs.has_key('threshold'):
+                    options['threshold'] = kwargs['threshold']
+                if not is_background(tile, **options):
+                    accept = True
+            else:
+                accept = True
+        ret.append(tile)
+
+    return ret
+
+
+def is_background(img, threshold=1e-3):
+    return True if np.mean(img) < threshold else False

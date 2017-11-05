@@ -50,6 +50,7 @@ start_time = time.time()
 Y_score = np.zeros((len(fnames)))
 
 for i in range(len(fnames)):
+    print(fnames[i])
     img = dxchange.read_tiff(fnames[i])
     img = nor_data(img)
     X_evl = np.zeros((nb_evl, dim_img, dim_img))
