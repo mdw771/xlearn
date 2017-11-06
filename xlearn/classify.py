@@ -54,8 +54,7 @@ from __future__ import print_function
 import numpy as np
 
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation, Flatten
-from keras.layers.convolutional import Convolution2D, MaxPooling2D
+from keras.layers import Conv2D, Activation, Dense, MaxPooling2D, Dropout, Flatten
 from keras.utils import np_utils
 
 import xlearn.utils as utils
@@ -88,17 +87,17 @@ def model(dim_img, nb_filters, nb_conv, nb_classes):
 
     mdl = Sequential()
 
-    mdl.add(Convolution2D(nb_filters, nb_conv, nb_conv,
-                          border_mode='valid',
-                          input_shape=(1, dim_img, dim_img),
-                          dim_ordering='th'))
+    mdl.add(Conv2D(nb_filters, (nb_conv, nb_conv),
+                   padding='valid',
+                   data_format='channels_first',
+                   input_shape=(1, dim_img, dim_img)))
     mdl.add(Activation('relu'))
-    mdl.add(Convolution2D(nb_filters, nb_conv, nb_conv, dim_ordering='th'))
+    mdl.add(Conv2D(nb_filters, (nb_conv, nb_conv), data_format='channels_first'))
     mdl.add(Activation('relu'))
     mdl.add(MaxPooling2D(pool_size=(2, 2)))
     mdl.add(Dropout(0.25))
 
-    mdl.add(Convolution2D(nb_filters * 2, nb_conv, nb_conv, dim_ordering='th'))
+    mdl.add(Conv2D(nb_filters * 2, (nb_conv, nb_conv), data_format='channels_first'))
     mdl.add(Activation('relu'))
     mdl.add(MaxPooling2D(pool_size=(2, 2)))
     mdl.add(Dropout(0.25))
