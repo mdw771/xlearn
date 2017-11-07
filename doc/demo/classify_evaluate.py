@@ -14,6 +14,7 @@ from xlearn.utils import nor_data
 from xlearn.utils import extract_3d
 from xlearn.utils import img_window
 from xlearn.classify import model
+from keras import backend as K
 import matplotlib.pyplot as plt
 import time
 import glob
@@ -58,6 +59,15 @@ for i in range(len(fnames)):
     for j in range(nb_evl):
         X_evl[j] = img_window(img[window[0][0]:window[1][0], window[0][1]:window[1][1]], dim_img)
     X_evl = X_evl.reshape(X_evl.shape[0], 1, dim_img, dim_img)
+
+    # get_layer_output = K.function([mdl.layers[0].input],
+    #                               [mdl.layers[0].output, mdl.layers[1].output, mdl.layers[2].output, mdl.layers[3].output])
+    # print(len(get_layer_output([X_evl])),
+    #       get_layer_output([X_evl])[0].shape,
+    #       get_layer_output([X_evl])[1].shape,
+    #       get_layer_output([X_evl])[2].shape,
+    #       get_layer_output([X_evl])[3].shape)
+
     Y_evl = mdl.predict(X_evl, batch_size=batch_size)
     Y_score[i] = sum(np.dot(Y_evl, [0, 1]))
     #print('The evaluate score is:', Y_score[i])

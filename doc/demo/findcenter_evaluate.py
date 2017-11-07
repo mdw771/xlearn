@@ -14,6 +14,7 @@ from xlearn.utils import nor_data
 from xlearn.utils import extract_patches
 from xlearn.utils import img_window
 from xlearn.classify import model
+from keras import backend as K
 import matplotlib.pyplot as plt
 import time
 import glob
@@ -59,6 +60,7 @@ for i in range(50):
         X_evl = extract_patches(img[360:1660, 440:1640],
                                 (128, 128), step=64, max_patches=None, random_state=None)
         X_evl = X_evl.reshape(X_evl.shape[0], 1, dim_img, dim_img)
+
         Y_evl = mdl.predict(X_evl, batch_size=batch_size)
 
         Y_score[i, j] = sum(np.dot(Y_evl, [0, 1]))

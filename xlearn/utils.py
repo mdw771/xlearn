@@ -50,6 +50,8 @@ Module containing utility routines
 """
 
 from __future__ import print_function
+import os
+import glob
 import numpy as np
 from itertools import product
 import numbers
@@ -64,7 +66,12 @@ __all__ = ['nor_data',
            'extract_patches',
            'reconstruct_patches',
            'img_window',
-           'extract_3d']
+           'extract_3d',
+           'subdivide_image',
+           'is_background',
+           'get_max_min_index',
+           'divide_chunks',
+           'get_folder_list']
 
 
 def nor_data(img):
@@ -403,3 +410,26 @@ def subdivide_image(img, tile_size=128, num=50, window=((800, 800), (1600, 1600)
 
 def is_background(img, threshold=1e-3):
     return True if np.mean(img) < threshold else False
+
+
+def get_max_min_index(dir):
+
+    try:
+        flist = glob.glob(os.path.join(dir, '*.tiff'))
+        flist.sort()
+        return (int(os.path.splitext(flist[-1])[0]), int(os.path.splitext(flist[0])[0]))
+    except IndexError:
+        return (0, 0)
+
+
+def divide_chunks(list, chunk_size):
+
+    res = []
+    for i in range(0, len(list), chunk_size):
+        res.append(list[i:min(i + chunk_size, len(list))])
+    return res
+
+
+def get_folder_list(dir, folder_pattern='*'):
+
+    return [o for o in glob.glob(os.path.join(dir, folder_pattern)) if os.path.isdir(o)]

@@ -134,10 +134,10 @@ def train(x_train, y_train, x_test, y_test, dim_img, nb_filters, nb_conv, batch_
     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
     mdl = model(dim_img, nb_filters, nb_conv, nb_classes)
 
-    mdl.fit(x_train, y_train, batch_size=batch_size, nb_epoch=nb_epoch,
+    mdl.fit(x_train, y_train, batch_size=batch_size, epochs=nb_epoch,
             verbose=1, validation_data=(x_test, y_test))
     mdl.save_weights('weight_center.h5')
-    score = mdl.evaluate(x_test, y_test, show_accuracy=True, verbose=0)
+    score = mdl.evaluate(x_test, y_test, verbose=0)
     print('Test score:', score[0])
     print('Test accuracy:', score[1])
     return mdl

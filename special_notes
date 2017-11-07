@@ -1,9 +1,9 @@
-Use Keras 1.1.0 with Theano backend
+Use Keras 2.0.8 with Theano backend
 
 Change ~/.keras/keras.json to:
 {
     "epsilon": 1e-07,
     "floatx": "float32",
     "backend": "theano",
-    "image_dim_ordering": "th"
+    "image_data_format": "channels_first"
 }

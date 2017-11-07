@@ -29,25 +29,25 @@ def create_training_set(dir='.', dest_folder='training_set', window=((800, 800),
                             '{:.2f}.tiff'.format(center + 10),
                             '{:.2f}.tiff'.format(center + 20)]
             if os.path.exists(os.path.join(dir, 'center', good_fname)):
-                dest_fname = '{:05d}.tiff'.format(get_max_index(os.path.join(dest_folder, 'good')) + 1)
+                dest_fname = '{:05d}.tiff'.format(get_max_min_index(os.path.join(dest_folder, 'good'))[0] + 1)
 
                 shutil.copy(os.path.join(dir, 'center', good_fname),
                             os.path.join(dest_folder, 'good', dest_fname))
                 for bad_fname in bad_fname_ls:
                     if os.path.exists(os.path.join(dir, 'center', bad_fname)):
-                        dest_fname = '{:05d}.tiff'.format(get_max_index(os.path.join(dest_folder, 'bad')) + 1)
+                        dest_fname = '{:05d}.tiff'.format(get_max_min_index(os.path.join(dest_folder, 'bad'))[0] + 1)
                         shutil.copy(os.path.join(dir, 'center', bad_fname),
                                     os.path.join(dest_folder, 'bad', dest_fname))
             else:
                 true_center_folder = get_folder_list(os.path.join(dir, 'center'))
                 true_center_folder.sort()
                 true_center_folder = true_center_folder[int(len(true_center_folder) / 2)]
-                dest_fname = '{:05d}.tiff'.format(get_max_index(os.path.join(dest_folder, 'good')) + 1)
+                dest_fname = '{:05d}.tiff'.format(get_max_min_index(os.path.join(dest_folder, 'good'))[0] + 1)
                 shutil.copy(os.path.join(true_center_folder, good_fname),
                             os.path.join(dest_folder, 'good', dest_fname))
                 for bad_fname in bad_fname_ls:
                     if os.path.exists(os.path.join(true_center_folder, bad_fname)):
-                        dest_fname = '{:05d}.tiff'.format(get_max_index(os.path.join(dest_folder, 'bad')) + 1)
+                        dest_fname = '{:05d}.tiff'.format(get_max_min_index(os.path.join(dest_folder, 'bad'))[0] + 1)
                         shutil.copy(os.path.join(true_center_folder, bad_fname),
                                     os.path.join(dest_folder, 'bad', dest_fname))
 
@@ -58,19 +58,8 @@ def create_training_set(dir='.', dest_folder='training_set', window=((800, 800),
 
 
 
-def get_folder_list(dir, folder_pattern='*'):
-
-    return [o for o in glob.glob(os.path.join(dir, folder_pattern)) if os.path.isdir(o)]
 
 
-def get_max_index(dir):
-
-    try:
-        flist = glob.glob(os.path.join(dir, '*.tiff'))
-        flist.sort()
-        return int(os.path.splitext(flist[-1])[0])
-    except IndexError:
-        return 0
 
 
 if __name__ == '__main__':
