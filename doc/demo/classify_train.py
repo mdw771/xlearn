@@ -43,6 +43,8 @@ nb_conv = 3
 good_folder = os.path.join('training_set', 'good')
 bad_folder = os.path.join('training_set', 'bad')
 
+raw_shape = dxchange.read_tiff(glob.glob(os.path.join(good_folder, '*.tiff'))[0]).shape
+
 good_filelist = glob.glob(os.path.join(good_folder, '*.tiff'))
 good_filelist.sort()
 bad_filelist = glob.glob(os.path.join(bad_folder, '*.tiff'))
@@ -55,15 +57,26 @@ if len(good_chunks) > len(bad_chunks):
 else:
     good_chunks.append([None] * (len(bad_chunks) - len(good_chunks)))
 
-for good_inds, bad_inds in zip(good_chunks, bad_chunks):
-    uncenter1 = dxchange.read_tiff_stack(os.path.join(bad_folder, '00000.tiff'), ind=ind_uncenter1, digit=4)
-    uncenter2 = dxchange.read_tiff_stack(fname, ind=ind_uncenter2, digit=4)
-    uncenter = np.concatenate((uncenter1, uncenter2), axis=0)
-    uncenter = nor_data(uncenter)
-    print (uncenter.shape)
-    uncenter = img_window(uncenter[:, 360:1460, 440:1440], 200)
-    print (uncenter.shape)
-    uncenter_patches = extract_3d(uncenter, patch_size, 10)
+for good_set, bad_set in zip(good_chunks, bad_chunks):
+
+    if good_set is not None:
+        good_data = np.zeros([len(good_set), raw_shape[0], raw_shape[1]])
+        for i, fname in enumerate(good_set):
+            good_data[i] = dxchange.read_tiff(fname)
+    else:
+        good_data = None
+    if bad_set is not None:
+        bad_data = np.zeros([len(bad_set), raw_shape[0], raw_shape[1]])
+        for i, fname in enumerate(bad_set):
+            bad_data[i] = dxchange.read_tiff(fname)
+    else:
+        bad_data = None
+
+    bad_data = nor_data(bad_data)
+    print (bad_data.shape)
+    uncenter = img_window(bad_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 200, reject_bg=True)
+    print (bad_data.shape)
+    uncenter_patches = extract_3d(bad_data, patch_size, 10)
     print(uncenter_patches.shape)
     np.random.shuffle(uncenter_patches)
     print ('uncenter_patches', uncenter_patches.shape)

@@ -327,7 +327,7 @@ def reconstruct_patches(patches, image_size, step):
                             min(j + step, p_w, i_w - j))
     return img
     
-def img_window(img, window_size):
+def img_window(img, window_size, reject_bg=False):
     """
     Randomly take a window from the image
     
@@ -408,7 +408,7 @@ def subdivide_image(img, tile_size=128, num=50, window=((800, 800), (1600, 1600)
     return ret
 
 
-def is_background(img, threshold=1e-3):
+def is_background(img, threshold=1e-5):
     return True if np.mean(img) < threshold else False
 
 
