@@ -1,6 +1,7 @@
 import os
 import glob
 import shutil
+import gc
 import numpy as np
 
 import dxchange
@@ -9,7 +10,7 @@ from xlearn.utils import *
 
 
 def create_training_set(dir='.', dest_folder='training_set', window=((800, 800), (1600, 1600)), reject_bg=True,
-                        expected_size=1920, padding_in_case_err=1000, **kwargs):
+                        padding_in_case_err=1000, **kwargs):
 
     if not os.path.exists(dest_folder):
         os.mkdir(dest_folder)
@@ -17,8 +18,6 @@ def create_training_set(dir='.', dest_folder='training_set', window=((800, 800),
         os.mkdir(os.path.join(dest_folder, 'good'))
     if not os.path.exists(os.path.join(dest_folder, 'bad')):
         os.mkdir(os.path.join(dest_folder, 'bad'))
-
-    expected_volume = expected_size * expected_size * 4
 
     if 'center_pos.txt' in os.listdir(dir):
         print(dir)
@@ -41,23 +40,11 @@ def create_training_set(dir='.', dest_folder='training_set', window=((800, 800),
 
                     shutil.copy(os.path.join(dir, 'center', good_fname),
                                 os.path.join(dest_folder, 'good', dest_fname))
-                    if os.path.getsize(os.path.join(dest_folder, 'good', dest_fname)) > expected_volume * 1.2:
-                        print('Oversized file detected. Cropping.')
-                        img = dxchange.read_tiff(os.path.join(dest_folder, 'good', dest_fname))
-                        img = img[padding_in_case_err:padding_in_case_err + expected_size,
-                                  padding_in_case_err:padding_in_case_err + expected_size]
-                        dxchange.write_tiff(img, os.path.join(dest_folder, 'good', dest_fname), dtype='float32', overwrite=True)
                     for bad_fname in bad_fname_ls:
                         if os.path.exists(os.path.join(dir, 'center', bad_fname)):
                             dest_fname = '{:05d}.tiff'.format(get_max_min_index(os.path.join(dest_folder, 'bad'))[0] + 1)
                             shutil.copy(os.path.join(dir, 'center', bad_fname),
                                         os.path.join(dest_folder, 'bad', dest_fname))
-                            if os.path.getsize(os.path.join(dest_folder, 'bad', dest_fname)) > expected_volume * 1.2:
-                                print('Oversized file detected. Cropping.')
-                                img = dxchange.read_tiff(os.path.join(dest_folder, 'bad', dest_fname))
-                                img = img[padding_in_case_err:padding_in_case_err + expected_size,
-                                      padding_in_case_err:padding_in_case_err + expected_size]
-                                dxchange.write_tiff(img, os.path.join(dest_folder, 'good', dest_fname), dtype='float32', overwrite=True)
                 else:
                     true_center_folder = get_folder_list(os.path.join(dir, 'center'))
                     true_center_folder.sort()
@@ -65,24 +52,11 @@ def create_training_set(dir='.', dest_folder='training_set', window=((800, 800),
                     dest_fname = '{:05d}.tiff'.format(get_max_min_index(os.path.join(dest_folder, 'good'))[0] + 1)
                     shutil.copy(os.path.join(true_center_folder, good_fname),
                                 os.path.join(dest_folder, 'good', dest_fname))
-                    if os.path.getsize(os.path.join(dest_folder, 'good', dest_fname)) > expected_volume * 1.2:
-                        print('Oversized file detected. Cropping.')
-                        img = dxchange.read_tiff(os.path.join(dest_folder, 'good', dest_fname))
-                        img = img[padding_in_case_err:padding_in_case_err + expected_size,
-                                  padding_in_case_err:padding_in_case_err + expected_size]
-                        dxchange.write_tiff(img, os.path.join(dest_folder, 'good', dest_fname), dtype='float32', overwrite=True)
                     for bad_fname in bad_fname_ls:
                         if os.path.exists(os.path.join(true_center_folder, bad_fname)):
                             dest_fname = '{:05d}.tiff'.format(get_max_min_index(os.path.join(dest_folder, 'bad'))[0] + 1)
                             shutil.copy(os.path.join(true_center_folder, bad_fname),
                                         os.path.join(dest_folder, 'bad', dest_fname))
-                            if os.path.getsize(os.path.join(dest_folder, 'bad', dest_fname)) > expected_volume * 1.2:
-                                print('Oversized file detected. Cropping.')
-                                img = dxchange.read_tiff(os.path.join(dest_folder, 'bad', dest_fname))
-                                img = img[padding_in_case_err:padding_in_case_err + expected_size,
-                                      padding_in_case_err:padding_in_case_err + expected_size]
-                                dxchange.write_tiff(img, os.path.join(dest_folder, 'good', dest_fname), dtype='float32',
-                                                    overwrite=True)
         except:
             print('WARNING: An error occurred in {}. Proceeding to next folder.'.format(dir))
 
@@ -90,8 +64,33 @@ def create_training_set(dir='.', dest_folder='training_set', window=((800, 800),
         folder_list = get_folder_list(dir)
         for folder in folder_list:
             create_training_set(dir=folder, window=window, **kwargs)
+    gc.collect()
 
 
 if __name__ == '__main__':
 
-    create_training_set()
+    expected_size = 1920
+    padding_in_case_err = 1000
+    expected_volume = expected_size * expected_size * 4
+
+    create_training_set(expected_size=expected_size,
+                        padding_in_case_err=padding_in_case_err)
+
+    print('Checking file sizes...')
+    flist = glob.glob(os.path.join('training_set', 'good', '*.tiff'))
+    for f in flist:
+        if os.path.getsize(f) > expected_volume * 1.2:
+            print('{} is oversized. Cropping.')
+            img = dxchange.read_tiff(f)
+            img = np.squeeze(img)[padding_in_case_err:padding_in_case_err + expected_size,
+                  padding_in_case_err:padding_in_case_err + expected_size]
+            dxchange.write_tiff(img, f, dtype='float32', overwrite=True)
+
+    flist = glob.glob(os.path.join('training_set', 'bad', '*.tiff'))
+    for f in flist:
+        if os.path.getsize(f) > expected_volume * 1.2:
+            print('{} is oversized. Cropping.')
+            img = dxchange.read_tiff(f)
+            img = np.squeeze(img)[padding_in_case_err:padding_in_case_err + expected_size,
+                  padding_in_case_err:padding_in_case_err + expected_size]
+            dxchange.write_tiff(img, f, dtype='float32', overwrite=True)
