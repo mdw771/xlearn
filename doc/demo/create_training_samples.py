@@ -8,7 +8,8 @@ import dxchange
 from xlearn.utils import *
 
 
-def create_training_set(dir='.', dest_folder='training_set', window=((800, 800), (1600, 1600)), reject_bg=True, **kwargs):
+def create_training_set(dir='.', dest_folder='training_set', window=((800, 800), (1600, 1600)), reject_bg=True,
+                        padding_in_case_err=1000, **kwargs):
 
     if not os.path.exists(dest_folder):
         os.mkdir(dest_folder)
@@ -21,6 +22,10 @@ def create_training_set(dir='.', dest_folder='training_set', window=((800, 800),
         print(dir)
         with open(os.path.join(dir, 'center_pos.txt')) as f:
             center = float(f.readlines()[0])
+            if not (os.path.exists(os.path.join(dir, 'center', '{:.2f}.tiff'.format(center))) or
+                    os.path.exists(os.path.join(get_folder_list(os.path.join(dir, 'center'))[0],
+                                                '{:.2f}.tiff'.format(center)))):
+                center += padding_in_case_err
             good_fname = '{:.2f}.tiff'.format(center)
             bad_fname_ls = ['{:.2f}.tiff'.format(center - 5),
                             '{:.2f}.tiff'.format(center - 10),
