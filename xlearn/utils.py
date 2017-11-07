@@ -420,7 +420,7 @@ def get_max_min_index(dir):
         return (int(os.path.splitext(os.path.basename(flist[-1]))[0]),
                 int(os.path.splitext(os.path.basename(flist[0]))[0]))
     except IndexError:
-        return (0, 0)
+        return (-1, -1)
 
 
 def divide_chunks(list, chunk_size):
