@@ -345,10 +345,10 @@ def img_window(img, window_size, reject_bg=False, **kwargs):
     options = {}
     if kwargs.has_key('threshold'):
         options['threshold'] = kwargs['threshold']
-    accept = False
 
     if len(img.shape) == 2:
         # img_wd = np.zeros((window_size, window_size))
+        accept = False
         while not accept:
             y_img, x_img = img.shape
             x_l = np.random.randint(0, x_img-window_size)
@@ -364,6 +364,7 @@ def img_window(img, window_size, reject_bg=False, **kwargs):
     else:
         img_wd = np.zeros((len(img), window_size, window_size))
         for i in range(len(img)):
+            accept = False
             while not accept:
                 img_num, y_img, x_img = img.shape
                 x_l = np.random.randint(0, x_img-window_size)
