@@ -373,7 +373,7 @@ def img_window(img, window_size, reject_bg=False, **kwargs):
                 y_b = y_t + window_size
                 temp = img[i, y_t:y_b, x_l:x_r]
                 if reject_bg:
-                    if not is_background(img_wd, **options):
+                    if not is_background(temp, **options):
                         accept = True
                 else:
                     accept = True

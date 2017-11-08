@@ -81,22 +81,22 @@ for good_set, bad_set in zip(good_chunks, bad_chunks):
 
     if bad_data is not None:
         # bad_data = nor_data(bad_data)
-        print ('bad_data raw shape: ', bad_data.shape)
+        print ('bad_data raw shape: {}; mean: {}'.format(bad_data.shape, bad_data.mean()))
         bad_data = img_window(bad_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 200, reject_bg=True, threshold=1e-5)
-        print ('bad_data windows: ', bad_data.shape)
+        print ('bad_data windows shape: {}; mean: {}: ', bad_data.shape)
         uncenter_patches = extract_3d(bad_data, patch_size, 10)
-        print('bad_data extracted patches: ', uncenter_patches.shape)
+        print('bad_data extracted patches shape: {}; mean: {}: '.format(uncenter_patches.shape, uncenter_patches.mean()))
         uncenter_patches = nor_data(uncenter_patches)
         np.random.shuffle(uncenter_patches)
 
     if good_data is not None:
         # good_data = nor_data(good_data)
-        print ('good_data raw shape: ', good_data.shape)
+        print ('good_data raw shape: {}; mean: {}'.format(good_data.shape, good_data.mean()))
         good_data = img_window(good_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 400, reject_bg=True, threshold=1e-5)
         center_patches = extract_3d(good_data, patch_size, 2)
         center_patches = nor_data(center_patches)
         np.random.shuffle(center_patches)
-        print ('good_data extracted patches: ', center_patches.shape)
+        print ('good_data extracted patches shape: {}; mean: {}'.format(center_patches.shape, center_patches.mean()))
 
     divider_bad = int(uncenter_patches.shape[0] * 0.7)
     divider_good = int(center_patches.shape[0] * 0.7)
