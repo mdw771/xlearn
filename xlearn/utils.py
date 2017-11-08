@@ -327,7 +327,7 @@ def reconstruct_patches(patches, image_size, step):
                             min(j + step, p_w, i_w - j))
     return img
     
-def img_window(img, window_size, reject_bg=False):
+def img_window(img, window_size, reject_bg=False, **kwargs):
     """
     Randomly take a window from the image
     
@@ -342,23 +342,41 @@ def img_window(img, window_size, reject_bg=False):
     img_wd : describe img_wd
 
     """
+    options = {}
+    if kwargs.has_key('threshold'):
+        options['threshold'] = kwargs['threshold']
+    accept = False
+
     if len(img.shape) == 2:
         # img_wd = np.zeros((window_size, window_size))
-        y_img, x_img = img.shape
-        x_l = np.random.randint(0, x_img-window_size)
-        x_r = x_l+window_size
-        y_t = np.random.randint(0, y_img-window_size)
-        y_b = y_t+window_size
-        img_wd = img[y_t:y_b, x_l:x_r]
+        while not accept:
+            y_img, x_img = img.shape
+            x_l = np.random.randint(0, x_img-window_size)
+            x_r = x_l+window_size
+            y_t = np.random.randint(0, y_img-window_size)
+            y_b = y_t+window_size
+            img_wd = img[y_t:y_b, x_l:x_r]
+            if reject_bg:
+                if not is_background(img_wd, **options):
+                    accept = True
+            else:
+                accept = True
     else:
         img_wd = np.zeros((len(img), window_size, window_size))
         for i in range(len(img)):
-            img_num, y_img, x_img = img.shape
-            x_l = np.random.randint(0, x_img-window_size)
-            x_r = x_l + window_size
-            y_t = np.random.randint(0, y_img-window_size)
-            y_b = y_t + window_size
-            img_wd[i] = img[i, y_t:y_b, x_l:x_r]
+            while not accept:
+                img_num, y_img, x_img = img.shape
+                x_l = np.random.randint(0, x_img-window_size)
+                x_r = x_l + window_size
+                y_t = np.random.randint(0, y_img-window_size)
+                y_b = y_t + window_size
+                temp = img[i, y_t:y_b, x_l:x_r]
+                if reject_bg:
+                    if not is_background(img_wd, **options):
+                        accept = True
+                else:
+                    accept = True
+            img_wd[i] = temp
     return img_wd
 
 

@@ -15,9 +15,10 @@ for f in flist:
     if os.path.getsize(f) > expected_volume * 1.2:
         print('{} is oversized. Cropping.'.format(f))
         img = dxchange.read_tiff(f)
-        img = img[padding_in_case_err:padding_in_case_err + expected_size,
+        img = np.squeeze(img)[padding_in_case_err:padding_in_case_err + expected_size,
               padding_in_case_err:padding_in_case_err + expected_size]
-        dxchange.write_tiff(img, f, dtype='float32', overwrite=True)
+        os.remove(f)
+        dxchange.write_tiff(img, f, dtype='float32')
 
 flist = glob.glob(os.path.join('training_set', 'bad', '*.tiff'))
 for f in flist:
@@ -25,6 +26,7 @@ for f in flist:
     if os.path.getsize(f) > expected_volume * 1.2:
         print('{} is oversized. Cropping.'.format(f))
         img = dxchange.read_tiff(f)
-        img = img[padding_in_case_err:padding_in_case_err + expected_size,
+        img = np.squeeze(img)[padding_in_case_err:padding_in_case_err + expected_size,
               padding_in_case_err:padding_in_case_err + expected_size]
+        os.remove(f)
         dxchange.write_tiff(img, f, dtype='float32', overwrite=True)

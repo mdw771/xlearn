@@ -16,7 +16,8 @@ import glob
 import dxchange
 import numpy as np
 from xlearn.utils import *
-from xlearn.classify import train
+from xlearn.classify import train, model
+from keras.utils import np_utils
 
 # ================================================================
 np.random.seed(1337)
@@ -26,7 +27,7 @@ patch_size = (dim_img, dim_img)
 batch_size = 50
 file_batch_size = 10 # set this according to RAM
 nb_classes = 2
-nb_epoch = 12
+nb_epoch = 8
 window=((800, 800), (1600, 1600))
 
 good_ind_range = 'all' # tuple or 'all'
@@ -57,7 +58,13 @@ if len(good_chunks) > len(bad_chunks):
 else:
     good_chunks.append([None] * (len(bad_chunks) - len(good_chunks)))
 
+mdl = model(dim_img, nb_filters, nb_conv, nb_classes)
+
+i_batch = 0
+
 for good_set, bad_set in zip(good_chunks, bad_chunks):
+
+    print('Batch {}'.format(i_batch))
 
     if good_set is not None:
         good_data = np.zeros([len(good_set), raw_shape[0], raw_shape[1]])
@@ -72,33 +79,45 @@ for good_set, bad_set in zip(good_chunks, bad_chunks):
     else:
         bad_data = None
 
-    bad_data = nor_data(bad_data)
-    print (bad_data.shape)
-    uncenter = img_window(bad_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 200, reject_bg=True)
-    print (bad_data.shape)
-    uncenter_patches = extract_3d(bad_data, patch_size, 10)
-    print(uncenter_patches.shape)
-    np.random.shuffle(uncenter_patches)
-    print ('uncenter_patches', uncenter_patches.shape)
-    # print uncenter_patches.shape
-    center_img = dxchange.read_tiff('../../test/test_data/1048.tiff')
-    center_img = nor_data(center_img)
-    print (center_img.shape)
-    center_img = img_window(center_img[360:1460, 440:1440], 400)
-    center_patches = extract_3d(center_img, patch_size, 1)
-    np.random.shuffle(center_patches)
-    print ('center_patches', center_patches.shape)
-    # plt.imshow(center_img, cmap='gray', interpolation= None)
-    # plt.show()
+    if bad_data is not None:
+        bad_data = nor_data(bad_data)
+        print (bad_data.shape)
+        bad_data = img_window(bad_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 200, reject_bg=True)
+        print (bad_data.shape)
+        uncenter_patches = extract_3d(bad_data, patch_size, 10)
+        print(uncenter_patches.shape)
+        np.random.shuffle(uncenter_patches)
+        print ('uncenter_patches', uncenter_patches.shape)
 
-    x_train = np.concatenate((uncenter_patches[0:500], center_patches[0:50000]), axis=0)
-    x_test = np.concatenate((uncenter_patches[500:1000], center_patches[50000:60000]), axis=0)
+    if good_data is not None:
+        good_data = nor_data(good_data)
+        print (good_data.shape)
+        good_data = img_window(good_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 400)
+        center_patches = extract_3d(good_data, patch_size, 2)
+        np.random.shuffle(center_patches)
+        print ('center_patches', center_patches.shape)
+
+    divider_bad = int(uncenter_patches.shape[0] * 0.7)
+    divider_good = int(center_patches.shape[0] * 0.7)
+    x_train = np.concatenate((uncenter_patches[0:divider_bad], center_patches[0:divider_good]), axis=0)
+    x_test = np.concatenate((uncenter_patches[divider_bad:], center_patches[divider_bad:]), axis=0)
     x_train = x_train.reshape(x_train.shape[0], 1, dim_img, dim_img)
     x_test = x_test.reshape(x_test.shape[0], 1, dim_img, dim_img)
-    y_train = np.zeros(50500)
-    y_train[500:] = 1
-    y_test = np.zeros(10500)
-    y_test[500:] = 1
+    y_train = np.zeros(len(x_train))
+    y_train[divider_bad:] = 1
+    y_test = np.zeros(len(x_test))
+    y_test[uncenter_patches.shape[0]-divider_bad:] = 1
 
-    model = train(x_train, y_train, x_test, y_test, dim_img, nb_filters, nb_conv, batch_size, nb_epoch, nb_classes)
-    model.save_weights('training_checkpoint.h5')
+    y_train = np_utils.to_categorical(y_train, nb_classes)
+    y_test = np_utils.to_categorical(y_test, nb_classes)
+    print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+
+    mdl.load_weights('weight_center.h5')
+    mdl.fit(x_train, y_train, batch_size=batch_size, epochs=nb_epoch,
+            verbose=1, validation_data=(x_test, y_test))
+    mdl.save_weights('weight_center.h5')
+    score = mdl.evaluate(x_test, y_test, verbose=0)
+    print('Test score:', score[0])
+    print('Test accuracy:', score[1])
+
+    i_batch += 1
