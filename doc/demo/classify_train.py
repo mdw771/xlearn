@@ -18,6 +18,7 @@ import numpy as np
 from xlearn.utils import *
 from xlearn.classify import train, model
 from keras.utils import np_utils
+import keras.callbacks
 
 # ================================================================
 np.random.seed(1337)
@@ -44,6 +45,11 @@ nb_conv = 3
 good_folder = os.path.join('training_set', 'good')
 bad_folder = os.path.join('training_set', 'bad')
 
+try:
+    os.mkdir('checkpoints')
+except:
+    pass
+
 raw_shape = dxchange.read_tiff(glob.glob(os.path.join(good_folder, '*.tiff'))[0]).shape
 
 good_filelist = glob.glob(os.path.join(good_folder, '*.tiff'))
@@ -62,9 +68,11 @@ mdl = model(dim_img, nb_filters, nb_conv, nb_classes)
 
 i_batch = 0
 
+
 for good_set, bad_set in zip(good_chunks, bad_chunks):
 
     print('Batch {}'.format(i_batch))
+    checkpoint = keras.callbacks.ModelCheckpoint('checkpoints/batch_{}.hdf5'.format(i_batch))
 
     if good_set is not None:
         good_data = np.zeros([len(good_set), raw_shape[0], raw_shape[1]])
@@ -82,9 +90,9 @@ for good_set, bad_set in zip(good_chunks, bad_chunks):
     if bad_data is not None:
         # bad_data = nor_data(bad_data)
         print ('bad_data raw shape: {}; mean: {}'.format(bad_data.shape, bad_data.mean()))
-        bad_data = img_window(bad_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 200, reject_bg=True, threshold=1e-5)
-        print ('bad_data windows shape: {}; mean: {}: ', bad_data.shape)
-        uncenter_patches = extract_3d(bad_data, patch_size, 10)
+        bad_data = img_window(bad_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 200, reject_bg=True, threshold=1e-4)
+        print ('bad_data windows shape: {}; mean: {}: '.format(bad_data.shape, bad_data.mean()))
+        uncenter_patches = extract_3d(bad_data, patch_size, 3)
         print('bad_data extracted patches shape: {}; mean: {}: '.format(uncenter_patches.shape, uncenter_patches.mean()))
         uncenter_patches = nor_data(uncenter_patches)
         np.random.shuffle(uncenter_patches)
@@ -92,11 +100,12 @@ for good_set, bad_set in zip(good_chunks, bad_chunks):
     if good_data is not None:
         # good_data = nor_data(good_data)
         print ('good_data raw shape: {}; mean: {}'.format(good_data.shape, good_data.mean()))
-        good_data = img_window(good_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 400, reject_bg=True, threshold=1e-5)
-        center_patches = extract_3d(good_data, patch_size, 2)
+        good_data = img_window(good_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 400, reject_bg=True, threshold=1e-4)
+        print ('good_data windows shape: {}; mean: {}: '.format(good_data.shape, good_data.mean()))
+        center_patches = extract_3d(good_data, patch_size, 4)
+        print ('good_data extracted patches shape: {}; mean: {}: '.format(center_patches.shape, center_patches.mean()))
         center_patches = nor_data(center_patches)
         np.random.shuffle(center_patches)
-        print ('good_data extracted patches shape: {}; mean: {}'.format(center_patches.shape, center_patches.mean()))
 
     divider_bad = int(uncenter_patches.shape[0] * 0.7)
     divider_good = int(center_patches.shape[0] * 0.7)
@@ -113,9 +122,12 @@ for good_set, bad_set in zip(good_chunks, bad_chunks):
     y_test = np_utils.to_categorical(y_test, nb_classes)
     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
 
-    mdl.load_weights('weight_center.h5')
+    try:
+        mdl.load_weights('weight_center.h5')
+    except IOError:
+        print('No weights to load. Starting from empty model.')
     mdl.fit(x_train, y_train, batch_size=batch_size, epochs=nb_epoch,
-            verbose=1, validation_data=(x_test, y_test))
+            verbose=1, validation_data=(x_test, y_test), callbacks=[checkpoint])
     mdl.save_weights('weight_center.h5')
     score = mdl.evaluate(x_test, y_test, verbose=0)
     print('Test score:', score[0])

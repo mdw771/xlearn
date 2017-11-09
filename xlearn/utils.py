@@ -381,7 +381,7 @@ def img_window(img, window_size, reject_bg=False, **kwargs):
     return img_wd
 
 
-def extract_3d(img, patch_size, step):
+def extract_3d(img, patch_size, step, reject_bj=False, threshold=1e-4):
     """
     Function Description
     
@@ -405,7 +405,15 @@ def extract_3d(img, patch_size, step):
         for i in range(len(img)-1):
             patches_tmp = extract_patches(img[i+1], patch_size, step)
             patches = np.concatenate((patches, patches_tmp), axis=0)
-    return patches
+    if reject_bj:
+        res = []
+        for i in range(patches):
+            if not is_background(patches[i], threshold=threshold):
+                res.append(patches[i])
+        res = np.array(res)
+    else:
+        res = patches
+    return res
 
 
 def subdivide_image(img, tile_size=128, num=50, window=((800, 800), (1600, 1600)), reject_bg=True, **kwargs):

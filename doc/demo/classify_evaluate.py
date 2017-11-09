@@ -20,9 +20,10 @@ import time
 import glob
 import os
 
+# ================================================================
 np.random.seed(1337)
 
-window = [[360, 440], [1460, 1440]]
+window=((700, 700), (1300, 1300))
 dest_folder = '../../test/test_data'
 
 dim_img = 128
@@ -38,6 +39,7 @@ nb_pool = 2
 # convolution kernel size
 nb_conv = 3
 nb_evl = 100
+# ================================================================
 
 start_time = time.time()
 fnames = glob.glob(os.path.join(dest_folder, '*.tiff'))
@@ -45,7 +47,7 @@ fnames = np.sort(fnames)
 
 mdl = model(dim_img, nb_filters, nb_conv, nb_classes)
 
-mdl.load_weights('classify_training_weights.h5')
+mdl.load_weights('weight_center.h5')
 print('The model loading time is %s seconds'%(time.time()-start_time))
 start_time = time.time()
 Y_score = np.zeros((len(fnames)))
@@ -57,7 +59,7 @@ for i in range(len(fnames)):
     X_evl = np.zeros((nb_evl, dim_img, dim_img))
 
     for j in range(nb_evl):
-        X_evl[j] = img_window(img[window[0][0]:window[1][0], window[0][1]:window[1][1]], dim_img)
+        X_evl[j] = img_window(img[window[0][0]:window[1][0], window[0][1]:window[1][1]], dim_img, reject_bg=True, threshold=1e-4)
     X_evl = X_evl.reshape(X_evl.shape[0], 1, dim_img, dim_img)
 
     # get_layer_output = K.function([mdl.layers[0].input],
