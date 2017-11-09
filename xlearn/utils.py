@@ -327,7 +327,7 @@ def reconstruct_patches(patches, image_size, step):
                             min(j + step, p_w, i_w - j))
     return img
     
-def img_window(img, window_size, reject_bg=False, **kwargs):
+def img_window(img, window_size, reject_bg=False, reset_random_seed=False, random_seed=1337, **kwargs):
     """
     Randomly take a window from the image
     
@@ -345,6 +345,9 @@ def img_window(img, window_size, reject_bg=False, **kwargs):
     options = {}
     if kwargs.has_key('threshold'):
         options['threshold'] = kwargs['threshold']
+
+    if reset_random_seed:
+        np.random.seed(random_seed)
 
     if len(img.shape) == 2:
         # img_wd = np.zeros((window_size, window_size))
