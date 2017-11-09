@@ -407,7 +407,7 @@ def extract_3d(img, patch_size, step, reject_bj=False, threshold=1e-4):
             patches = np.concatenate((patches, patches_tmp), axis=0)
     if reject_bj:
         res = []
-        for i in range(patches):
+        for i in range(len(patches)):
             if not is_background(patches[i], threshold=threshold):
                 res.append(patches[i])
         res = np.array(res)

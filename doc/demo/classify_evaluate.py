@@ -55,11 +55,11 @@ Y_score = np.zeros((len(fnames)))
 for i in range(len(fnames)):
     print(fnames[i])
     img = dxchange.read_tiff(fnames[i])
-    img = nor_data(img)
     X_evl = np.zeros((nb_evl, dim_img, dim_img))
 
     for j in range(nb_evl):
         X_evl[j] = img_window(img[window[0][0]:window[1][0], window[0][1]:window[1][1]], dim_img, reject_bg=True, threshold=1e-4)
+    X_evl = nor_data(X_evl)
     X_evl = X_evl.reshape(X_evl.shape[0], 1, dim_img, dim_img)
 
     # get_layer_output = K.function([mdl.layers[0].input],
