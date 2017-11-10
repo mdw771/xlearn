@@ -23,14 +23,13 @@ import os
 # ================================================================
 np.random.seed(1337)
 
-window=((700, 700), (1300, 1300))
+window=((600, 600), (1300, 1300))
 dest_folder = '../../test/test_data'
 
 dim_img = 128
 patch_size = (dim_img, dim_img)
 batch_size = 50
 nb_classes = 2
-nb_epoch = 12
 
 # number of convolutional filters to use
 nb_filters = 32
