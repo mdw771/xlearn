@@ -31,6 +31,7 @@ file_batch_size_bad = 6  # set this according to RAM
 nb_classes = 2
 nb_epoch = 4
 window=((600, 600), (1300, 1300))
+save_intermediate = True
 
 good_ind_range = 'all' # tuple or 'all'
 bad_ind_range = 'all' # tuple or 'all'
@@ -92,20 +93,26 @@ for good_set, bad_set in zip(good_chunks, bad_chunks):
         # bad_data = nor_data(bad_data)
         print ('bad_data raw shape: {}; mean: {}'.format(bad_data.shape, bad_data.mean()))
         bad_data = img_window(bad_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 200, reject_bg=True, threshold=1.2e-4)
+        bad_data = convolve_stack(bad_data, get_gradient_kernel())
         print ('bad_data windows shape: {}; mean: {}: '.format(bad_data.shape, bad_data.mean()))
         uncenter_patches = extract_3d(bad_data, patch_size, 3, reject_bj=True, threshold=1.2e-4)
         print('bad_data extracted patches shape: {}; mean: {}: '.format(uncenter_patches.shape, uncenter_patches.mean()))
         uncenter_patches = nor_data(uncenter_patches)
+        if save_intermediate:
+            dxchange.write_tiff(uncenter_patches, 'debug/bad_patches_{}.tiff'.format(i_batch), dtype='float32', overwrite=True)
         np.random.shuffle(uncenter_patches)
 
     if good_data is not None:
         # good_data = nor_data(good_data)
         print ('good_data raw shape: {}; mean: {}'.format(good_data.shape, good_data.mean()))
         good_data = img_window(good_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 400, reject_bg=True, threshold=1.2e-4)
+        good_data = convolve_stack(good_data, get_gradient_kernel())
         print ('good_data windows shape: {}; mean: {}: '.format(good_data.shape, good_data.mean()))
         center_patches = extract_3d(good_data, patch_size, 4, reject_bj=True, threshold=1.2e-4)
         print ('good_data extracted patches shape: {}; mean: {}: '.format(center_patches.shape, center_patches.mean()))
         center_patches = nor_data(center_patches)
+        if save_intermediate:
+            dxchange.write_tiff(center_patches, 'debug/good_patches_{}.tiff'.format(i_batch), dtype='float32', overwrite=True)
         np.random.shuffle(center_patches)
 
     divider_bad = int(uncenter_patches.shape[0] * 0.7)

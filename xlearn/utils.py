@@ -56,6 +56,7 @@ import numpy as np
 from itertools import product
 import numbers
 from numpy.lib.stride_tricks import as_strided
+from scipy.ndimage.filters import convolve
 
 __authors__ = "Xiaogang Yang, Francesco De Carlo"
 __copyright__ = "Copyright (c) 2016, Argonne National Laboratory"
@@ -71,7 +72,9 @@ __all__ = ['nor_data',
            'is_background',
            'get_max_min_index',
            'divide_chunks',
-           'get_folder_list']
+           'get_folder_list',
+           'get_gradient_kernel',
+           'convolve_stack']
 
 
 def nor_data(img):
@@ -464,3 +467,21 @@ def divide_chunks(list, chunk_size):
 def get_folder_list(dir, folder_pattern='*'):
 
     return [o for o in glob.glob(os.path.join(dir, folder_pattern)) if os.path.isdir(o)]
+
+
+def get_gradient_kernel():
+
+    k = np.array([[-1], [0], [1]])
+    return k / np.sqrt(2)
+
+
+def convolve_stack(img, kernel):
+
+    origin = (np.array(kernel.shape) / 2).astype('int')
+    if img.ndim == 2:
+        return convolve(img, kernel, origin=origin)
+    else:
+        ret = np.zeros_like(img)
+        for i in range(ret.shape[0]):
+            ret[i] = convolve(img[i], kernel, origin=origin)
+        return ret
