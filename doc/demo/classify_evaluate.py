@@ -10,9 +10,7 @@ Example script
 from __future__ import print_function
 import dxchange
 import numpy as np
-from xlearn.utils import nor_data
-from xlearn.utils import extract_3d
-from xlearn.utils import img_window
+from xlearn.utils import *
 from xlearn.classify import model
 from keras import backend as K
 import matplotlib.pyplot as plt
@@ -24,12 +22,14 @@ import os
 np.random.seed(1337)
 
 window=((600, 600), (1300, 1300))
-dest_folder = '../../test/test_data'
+dest_folder = 'raw_data/VS172_talamocortex_30ms_phase30cm_2501_step_25kev_x00_y00_00125/center'
 
 dim_img = 128
 patch_size = (dim_img, dim_img)
 batch_size = 50
 nb_classes = 2
+
+save_intermediate = True
 
 # number of convolutional filters to use
 nb_filters = 32
@@ -47,7 +47,7 @@ fnames = np.sort(fnames)
 mdl = model(dim_img, nb_filters, nb_conv, nb_classes)
 
 mdl.load_weights('weight_center.h5')
-print('The model loading time is %s seconds'%(time.time()-start_time))
+print('The model loading time is %s seconds' % (time.time() - start_time))
 start_time = time.time()
 Y_score = np.zeros((len(fnames)))
 
@@ -58,7 +58,10 @@ for i in range(len(fnames)):
 
     for j in range(nb_evl):
         X_evl[j] = img_window(img[window[0][0]:window[1][0], window[0][1]:window[1][1]], dim_img, reject_bg=True, threshold=1.2e-4, reset_random_seed=True, random_seed=j)
+    X_evl = convolve_stack(X_evl, get_gradient_kernel())
     X_evl = nor_data(X_evl)
+    if save_intermediate:
+        dxchange.write_tiff(X_evl, os.path.join('debug', 'x_evl', 'x_evl_{}'.format(i)), dtype='float32', overwrite=True)
     X_evl = X_evl.reshape(X_evl.shape[0], 1, dim_img, dim_img)
 
     # get_layer_output = K.function([mdl.layers[0].input],

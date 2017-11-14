@@ -92,6 +92,12 @@ def model(dim_img, nb_filters, nb_conv, nb_classes):
                    data_format='channels_first',
                    input_shape=(1, dim_img, dim_img)))
     mdl.add(Activation('relu'))
+
+    # added
+    mdl.add(Conv2D(nb_filters, (nb_conv, nb_conv), data_format='channels_first'))
+    mdl.add(Activation('relu'))
+    # end
+
     mdl.add(Conv2D(nb_filters, (nb_conv, nb_conv), data_format='channels_first'))
     mdl.add(Activation('relu'))
     mdl.add(MaxPooling2D(pool_size=(2, 2)))
