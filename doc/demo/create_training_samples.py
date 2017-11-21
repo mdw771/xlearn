@@ -16,8 +16,10 @@ def create_training_set(dir='.', dest_folder='training_set', window=((800, 800),
         os.mkdir(dest_folder)
     if not os.path.exists(os.path.join(dest_folder, 'good')):
         os.mkdir(os.path.join(dest_folder, 'good'))
-    if not os.path.exists(os.path.join(dest_folder, 'bad')):
-        os.mkdir(os.path.join(dest_folder, 'bad'))
+    if not os.path.exists(os.path.join(dest_folder, 'bad_low')):
+        os.mkdir(os.path.join(dest_folder, 'bad_low'))
+    if not os.path.exists(os.path.join(dest_folder, 'bad_high')):
+        os.mkdir(os.path.join(dest_folder, 'bad_high'))
 
     if 'center_pos.txt' in os.listdir(dir):
         print(dir)
@@ -29,16 +31,22 @@ def create_training_set(dir='.', dest_folder='training_set', window=((800, 800),
                                                     '{:.2f}.tiff'.format(center)))):
                     center += padding_in_case_err
                 good_fname = '{:.2f}.tiff'.format(center)
-                bad_fname_ls = ['{:.2f}.tiff'.format(center + off) for off in range(-20, -1) + range(2, 21)]
+                bad_low_fname_ls = ['{:.2f}.tiff'.format(center + off) for off in range(-20, -1)]
+                bad_high_fname_ls = ['{:.2f}.tiff'.format(center + off) for off in range(2, 21)]
                 if os.path.exists(os.path.join(dir, 'center', good_fname)):
                     dest_fname = os.path.basename(dir) + '.tiff'
                     shutil.copy2(os.path.join(dir, 'center', good_fname),
                                  os.path.join(dest_folder, 'good', dest_fname))
-                    for i, bad_fname in enumerate(bad_fname_ls):
+                    for i, bad_fname in enumerate(bad_low_fname_ls):
                         if os.path.exists(os.path.join(dir, 'center', bad_fname)):
                             dest_fname = os.path.basename(dir) + '_{:02d}.tiff'.format(i)
                             shutil.copy2(os.path.join(dir, 'center', bad_fname),
-                                        os.path.join(dest_folder, 'bad', dest_fname))
+                                        os.path.join(dest_folder, 'bad_low', dest_fname))
+                    for i, bad_fname in enumerate(bad_high_fname_ls):
+                        if os.path.exists(os.path.join(dir, 'center', bad_fname)):
+                            dest_fname = os.path.basename(dir) + '_{:02d}.tiff'.format(i)
+                            shutil.copy2(os.path.join(dir, 'center', bad_fname),
+                                        os.path.join(dest_folder, 'bad_high', dest_fname))
                 else:
                     true_center_folder = get_folder_list(os.path.join(dir, 'center'))
                     true_center_folder.sort()
@@ -46,11 +54,16 @@ def create_training_set(dir='.', dest_folder='training_set', window=((800, 800),
                     dest_fname = os.path.basename(dir) + '.tiff'
                     shutil.copy2(os.path.join(true_center_folder, good_fname),
                                 os.path.join(dest_folder, 'good', dest_fname))
-                    for i, bad_fname in enumerate(bad_fname_ls):
+                    for i, bad_fname in enumerate(bad_low_fname_ls):
                         if os.path.exists(os.path.join(true_center_folder, bad_fname)):
                             dest_fname = os.path.basename(dir) + '_{:02d}.tiff'.format(i)
                             shutil.copy2(os.path.join(true_center_folder, bad_fname),
-                                         os.path.join(dest_folder, 'bad', dest_fname))
+                                         os.path.join(dest_folder, 'bad_low', dest_fname))
+                    for i, bad_fname in enumerate(bad_high_fname_ls):
+                        if os.path.exists(os.path.join(true_center_folder, bad_fname)):
+                            dest_fname = os.path.basename(dir) + '_{:02d}.tiff'.format(i)
+                            shutil.copy2(os.path.join(true_center_folder, bad_fname),
+                                         os.path.join(dest_folder, 'bad_high', dest_fname))
         except:
             print('WARNING: An error occurred in {}. Proceeding to next folder.'.format(dir))
 
@@ -81,7 +94,17 @@ if __name__ == '__main__':
             os.remove(f)
             dxchange.write_tiff(img, f, dtype='float32')
 
-    flist = glob.glob(os.path.join('training_set', 'bad', '*.tiff'))
+    flist = glob.glob(os.path.join('training_set', 'bad_low', '*.tiff'))
+    for f in flist:
+        if os.path.getsize(f) > expected_volume * 1.2:
+            print('{} is oversized. Cropping.'.format(f))
+            img = dxchange.read_tiff(f)
+            img = np.squeeze(img)[padding_in_case_err:padding_in_case_err + expected_size,
+                  padding_in_case_err:padding_in_case_err + expected_size]
+            os.remove(f)
+            dxchange.write_tiff(img, f, dtype='float32')
+
+    flist = glob.glob(os.path.join('training_set', 'bad_high', '*.tiff'))
     for f in flist:
         if os.path.getsize(f) > expected_volume * 1.2:
             print('{} is oversized. Cropping.'.format(f))
