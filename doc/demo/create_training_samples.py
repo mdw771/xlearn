@@ -29,12 +29,7 @@ def create_training_set(dir='.', dest_folder='training_set', window=((800, 800),
                                                     '{:.2f}.tiff'.format(center)))):
                     center += padding_in_case_err
                 good_fname = '{:.2f}.tiff'.format(center)
-                bad_fname_ls = ['{:.2f}.tiff'.format(center - 5),
-                                '{:.2f}.tiff'.format(center - 10),
-                                '{:.2f}.tiff'.format(center - 20),
-                                '{:.2f}.tiff'.format(center + 5),
-                                '{:.2f}.tiff'.format(center + 10),
-                                '{:.2f}.tiff'.format(center + 20)]
+                bad_fname_ls = ['{:.2f}.tiff'.format(center + off) for off in range(-20, -1) + range(2, 21)]
                 if os.path.exists(os.path.join(dir, 'center', good_fname)):
                     dest_fname = os.path.basename(dir) + '.tiff'
                     shutil.copy2(os.path.join(dir, 'center', good_fname),
