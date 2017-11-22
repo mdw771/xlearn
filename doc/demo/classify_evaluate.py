@@ -27,7 +27,7 @@ dest_folder = 'raw_data/VS172_talamocortex_30ms_phase30cm_2501_step_25kev_x00_y0
 dim_img = 128
 patch_size = (dim_img, dim_img)
 batch_size = 50
-nb_classes = 2
+nb_classes = 3
 
 save_intermediate = True
 
@@ -73,7 +73,7 @@ for i in range(len(fnames)):
     #       get_layer_output([X_evl])[3].shape)
 
     Y_evl = mdl.predict(X_evl, batch_size=batch_size)
-    Y_score[i] = sum(np.dot(Y_evl, [0, 1]))
+    Y_score[i] = sum(np.dot(Y_evl, [0, 0, 1]))
     #print('The evaluate score is:', Y_score[i])
     #Y_score = sum(np.round(Y_score))/len(Y_score)
 
