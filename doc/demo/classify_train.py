@@ -110,7 +110,7 @@ for good_set, bad_low_set, bad_high_set in zip(good_chunks, bad_low_chunks, bad_
         bad_low_data = img_window(bad_low_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 200, reject_bg=True, threshold=1.2e-4)
         bad_low_data = convolve_stack(bad_low_data, get_gradient_kernel())
         print ('bad_low_data windows shape: {}; mean: {}: '.format(bad_low_data.shape, bad_low_data.mean()))
-        bad_low_data = extract_3d(bad_low_data, patch_size, 3, reject_bj=True, threshold=1.2e-4)
+        bad_low_data = extract_3d(bad_low_data, patch_size, 6, reject_bj=False, threshold=1.2e-4)
         print('bad_low_data extracted patches shape: {}; mean: {}: '.format(bad_low_data.shape, bad_low_data.mean()))
         bad_low_data = nor_data(bad_low_data)
         if save_intermediate:
@@ -123,7 +123,7 @@ for good_set, bad_low_set, bad_high_set in zip(good_chunks, bad_low_chunks, bad_
         bad_high_data = img_window(bad_high_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 200, reject_bg=True, threshold=1.2e-4)
         bad_high_data = convolve_stack(bad_high_data, get_gradient_kernel())
         print ('bad_high_data windows shape: {}; mean: {}: '.format(bad_high_data.shape, bad_high_data.mean()))
-        bad_high_data = extract_3d(bad_high_data, patch_size, 3, reject_bj=True, threshold=1.2e-4)
+        bad_high_data = extract_3d(bad_high_data, patch_size, 6, reject_bj=False, threshold=1.2e-4)
         print('bad_high_data extracted patches shape: {}; mean: {}: '.format(bad_high_data.shape, bad_high_data.mean()))
         bad_high_data = nor_data(bad_high_data)
         if save_intermediate:
@@ -136,7 +136,7 @@ for good_set, bad_low_set, bad_high_set in zip(good_chunks, bad_low_chunks, bad_
         good_data = img_window(good_data[:, window[0][0]:window[1][0], window[0][1]:window[1][1]], 400, reject_bg=True, threshold=1.2e-4)
         good_data = convolve_stack(good_data, get_gradient_kernel())
         print ('good_data windows shape: {}; mean: {}: '.format(good_data.shape, good_data.mean()))
-        good_data = extract_3d(good_data, patch_size, 4, reject_bj=True, threshold=1.2e-4)
+        good_data = extract_3d(good_data, patch_size, 4, reject_bj=False, threshold=1.2e-4)
         print ('good_data extracted patches shape: {}; mean: {}: '.format(good_data.shape, good_data.mean()))
         good_data = nor_data(good_data)
         if save_intermediate:
@@ -150,10 +150,14 @@ for good_set, bad_low_set, bad_high_set in zip(good_chunks, bad_low_chunks, bad_
     x_test = np.concatenate((bad_low_data[divider_bad_low:], bad_high_data[divider_bad_high:], good_data[divider_good:]), axis=0)
     x_train = x_train.reshape(x_train.shape[0], 1, dim_img, dim_img)
     x_test = x_test.reshape(x_test.shape[0], 1, dim_img, dim_img)
+
+    # label bad_low as 0, bad_high as 1, good as 2
     y_train = np.zeros(len(x_train))
-    y_train[divider_bad:] = 1
+    y_train[divider_bad_low:] += 1
+    y_train[divider_bad_low+divider_bad_high:] += 1
     y_test = np.zeros(len(x_test))
-    y_test[uncenter_patches.shape[0]-divider_bad:] = 1
+    y_test[bad_low_data.shape[0]-divider_bad_low:] += 1
+    y_test[bad_low_data.shape[0]-divider_bad_low+bad_high_data.shape[0]-divider_bad_high:] += 1
 
     y_train = np_utils.to_categorical(y_train, nb_classes)
     y_test = np_utils.to_categorical(y_test, nb_classes)
