@@ -199,6 +199,7 @@ def tomo_learn(sinoi, ang, px, reuse, conv_nb, conv_size, dropout, method):
     elif method == 'fc':
         inputs = tf.convert_to_tensor(sinoi)
         recon = mdnn_net(inputs, conv_nb, conv_size, dropout, px, reuse=reuse)
+
     else:
         sys.exit('Please provide a correct method. Options: backproj, conv1d, fc')
 
@@ -286,7 +287,7 @@ def rec_dcgan_back(prj, ang, save_wpath, init_wpath = None, **kwargs):
             with tf.device('/device:GPU:1'):
                 dl, _ = sess.run([disc_loss, train_disc],
                                  feed_dict={img_input: prj, img_output: prj})
-            with tf.device('/device:GPU:2'):
+            with tf.device('/device:GPU:0'):
                 gl, _ = sess.run([gen_loss, train_gen], feed_dict={img_input: prj, img_output: prj})
 
             if step % kwargs['display_step'] == 0 or step == 1:
@@ -374,7 +375,7 @@ def rec_dcgan(prj, ang, save_wpath, init_wpath = None, **kwargs):
         plt.tight_layout()
 #########################################################################
     # ani_init()
-    rec_tmp = tf.zeros([1, px, px, 1])
+    rec_tmp = tf.zeros([1, img_input.shape[0], px, px, 1])
 
     init = tf.compat.v1.global_variables_initializer()
     saver = tf.compat.v1.train.Saver()
@@ -387,10 +388,10 @@ def rec_dcgan(prj, ang, save_wpath, init_wpath = None, **kwargs):
                 print('Please provide the file name of initial weights.')
             saver.restore(sess, init_wpath)
         for step in range(1, kwargs['num_steps'] + 1):
-            with tf.device('/device:GPU:1'):
+            with tf.device('/device:GPU:0'):
                 dl, _ = sess.run([disc_loss, train_disc],
                                  feed_dict={img_input: prj, img_output: prj})
-            with tf.device('/device:GPU:2'):
+            with tf.device('/device:GPU:1'):
                 gl, _ = sess.run([gen_loss, train_gen], feed_dict={img_input: prj, img_output: prj})
 
             if np.isnan(gl):
@@ -429,21 +430,24 @@ def rec_dcgan(prj, ang, save_wpath, init_wpath = None, **kwargs):
                                                dropout=kwargs['dropout'],
                                                method=kwargs['method']))
                 break
-            if step > (kwargs['num_steps'] - 10):
-                _, recon = sess.run(tomo_learn(prj, ang, px, reuse=True, conv_nb=kwargs['conv_nb'],
+            if step > (kwargs['num_steps'] - 5):
+                pred_data, recon = sess.run(tomo_learn(prj, ang, px, reuse=True, conv_nb=kwargs['conv_nb'],
                                                   conv_size=kwargs['conv_size'],
                                                   dropout=kwargs['dropout'],
                                                   method=kwargs['method']))
-                rec_tmp = tf.concat([rec_tmp, recon], axis=0)
+                recon_reshaped = tf.reshape(recon, [1, *recon.shape])
+                rec_tmp = tf.concat([rec_tmp, recon_reshaped], axis=0)
                 # print(rec_tmp.shape)
-        plt.close(fig)
+        if kwargs['iter_plot']:
+            plt.close(fig)
         saver.save(sess, save_wpath)
         if rec_tmp.shape[0] >1:
-            recon = tf.reduce_mean(rec_tmp, axis=0).eval()
+            recon = tf.reduce_mean(rec_tmp[1:], axis=0).eval()
 
 
         # print(recon.shape)
-    return recon
+    sess.close()
+    return recon, pred_data
 
 
 def rec_cost(prj, ang, save_wpath, log_path, init_wpath = None, **kwargs):

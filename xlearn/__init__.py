@@ -54,6 +54,7 @@ from xlearn.transform import *
 from xlearn.utils import *
 from xlearn.models import *
 from xlearn.segmentation import *
+from xlearn.ganrec import *
 
 try:
     import pkg_resources
